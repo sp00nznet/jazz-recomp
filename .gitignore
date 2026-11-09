@@ -1,0 +1,23 @@
+# Your copy of the game (Jazz Jackrabbit (c) 1994 Epic MegaGames). Never committed.
+game/
+*.EXE
+*.exe
+*.DLL
+*.dll
+*.iso
+*.LBM
+*.SMK
+
+# Generated from the game: the lifted C, the IDA code map, the memory image,
+# the import maps. Regenerate with tools/relift.py.
+work/
+src/
+
+# Build output
+build/
+build_*/
+*.bmp
+
+# Python
+__pycache__/
+*.pyc
