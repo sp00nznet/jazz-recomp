@@ -1,0 +1,17 @@
+{
+  "title": "Jazz Jackrabbit",
+  "repo": "sp00nznet/jazz-recomp",
+  "accent": "#2fa84f",
+  "note": {
+    "windows": "The build takes a few minutes and under 1 GB. It needs IDA 9 with idalib for Python 3.11, which it cannot install for you. Python, Git and MSYS2 (with MinGW-w64 gcc, CMake and Ninja, about 400 MB) are installed if they are missing. Point it at the Jazz Jackrabbit CD or a copy of its files."
+  },
+  "game": {
+    "name": "Jazz Jackrabbit (CD)",
+    "files": ["FILE0001.EXE|file0001.exe"]
+  },
+  "sources": [{ "repo": "sp00nznet/pcrecomp", "ref": "9d73debe4b2e3d83676e1f00c11dd967df6341f8", "dir": "pcrecomp" }],
+  "setup": {
+    "windows": ["cmd", "/c", "Setup.cmd", "-Yes", "-GameDir", "{game}"]
+  },
+  "play": "Jazz Jackrabbit*"
+}

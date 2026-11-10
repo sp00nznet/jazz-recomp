@@ -9,7 +9,22 @@
 ## Then
 - Sound: answer the MASI driver interface in the host (Sound Blaster), or keep
   it off.
-- Setup script, `launcher/launcher.json`, a netlab project file.
+- Build and publish the recomp-launcher installer (the workflow is manual
+  while the repo is private).
+
+## House style still missing (REPO_RULES sections 9 and 10)
+- Lift without IDA: the default build path must use only our own tools. A
+  lift with no code map today linear-sweeps 7,595 "functions" and the game
+  stops with Runtime error 105. That is a pcrecomp gap (the NE front end's
+  code/data split), to fix there and score against IDA's map.
+- A conformance harness: scripted headless runs with a pass/fail count
+  against fixed milestones (intro, title, menu, episodes, level), SKIP
+  without game data, wired as the netlab QA, and its figure in the README.
+- The house CLI: `--headless --record out.mp4` (offscreen frames to ffmpeg)
+  in place of the `JAZZ_*` environment variables.
+- Paths not compiled in (`game\`, `work\mem_image.bin`), so a farm build runs
+  on a test VM.
+- Merge `win16-dos` into pcrecomp `main` (through a PR) and pin `main`.
 
 ## Toolkit (pcrecomp, win16-dos)
 - NE lifter: a seeded function's branch to an offset that is not a function

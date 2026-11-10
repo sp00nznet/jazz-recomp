@@ -16,8 +16,13 @@ src/
 # Build output
 build/
 build_*/
+build-*/
 *.bmp
 
 # Python
 __pycache__/
 *.pyc
+
+# Setup.cmd's log and the shortcut it leaves
+setup.log
+/*.lnk
