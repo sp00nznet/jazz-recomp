@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- The lift needs no IDA: pcrecomp's `pcrecomp-ne-nativemap` branch builds the code map
+  itself (`tools/ne/ne_codemap.py`). `tools/relift.py` lost `--ida`, `Setup.cmd`
+  no longer checks for idalib, and the game runs through the menus into a
+  level as before (7,142 functions, 0 unresolved calls).
+
 ### Added
 - `Setup.cmd` (`tools/setup.ps1`): checks for Python, Git, IDA's idalib and
   MSYS2's MinGW-w64 gcc, CMake and Ninja, offering to install what can be

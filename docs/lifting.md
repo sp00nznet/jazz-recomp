@@ -2,7 +2,7 @@
 
 `FILE0001.EXE` is an NE program for Borland's RTM: 10 code segments, imports
 from `KERNEL` (memory, selectors, and the selectors for real-mode memory) and
-three from `RTM` itself. pcrecomp's `ne_link` lifts it with an IDA code map,
+three from `RTM` itself. pcrecomp's `ne_link` lifts it with its own code map (`ne_codemap.py`; IDA's at first),
 the same way as Space Bucks. pcrecomp's Win16 host loads it and runs `InitTask`
 and the rest of KERNEL. Everything a DOS game does that a Windows program
 doesn't is in `runtime/jazz.c` and `runtime/vga.c`. The toolkit half is

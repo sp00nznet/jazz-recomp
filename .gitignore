@@ -8,7 +8,7 @@ game/
 *.LBM
 *.SMK
 
-# Generated from the game: the lifted C, the IDA code map, the memory image,
+# Generated from the game: the lifted C, the memory image,
 # the import maps. Regenerate with tools/relift.py.
 work/
 src/

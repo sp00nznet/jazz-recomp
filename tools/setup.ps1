@@ -2,11 +2,11 @@
   setup.ps1 - the Quick start (README, Getting Started). Setup.cmd runs this.
 
   From a plain download to a "Jazz Jackrabbit" shortcut in this folder:
-    1. check the tools (Python 3, IDA 9's idalib, Git, MSYS2's MinGW-w64 gcc
-       with CMake and Ninja) and offer to install what can be installed
+    1. check the tools (Python 3, Git, MSYS2's MinGW-w64 gcc with CMake and
+       Ninja) and offer to install what can be installed
     2. copy your CD into game\ and set up "no sound card"
-    3. fetch pcrecomp's win16-dos branch at the tested commit
-    4. export IDA's code map and lift FILE0001.EXE to C (tools\relift.py --ida)
+    3. fetch pcrecomp's pcrecomp-ne-nativemap branch at the tested commit
+    4. lift FILE0001.EXE to C (tools\relift.py; pcrecomp makes the code map)
     5. build build\jazz.exe
     6. put a shortcut in this folder
 
@@ -29,11 +29,11 @@ Set-Location $Root
 $Log = Join-Path $Root "setup.log"
 "=== setup $(Get-Date -Format s)" | Out-File $Log -Encoding utf8
 
-# The toolkit this game needs: pcrecomp's win16-dos branch (not merged into
+# The toolkit this game needs: pcrecomp's pcrecomp-ne-nativemap branch (not merged into
 # main yet), at the commit it was last lifted, built and run against.
 $PcrecompUrl = "https://github.com/sp00nznet/pcrecomp.git"
-$PcrecompBranch = "win16-dos"
-$PcrecompRef = "9d73debe4b2e3d83676e1f00c11dd967df6341f8"
+$PcrecompBranch = "pcrecomp-ne-nativemap"
+$PcrecompRef = "3097e4a0756765c07f1234d820490388a746a063"
 $Msys = "C:\msys64"
 
 function Say($m) { Write-Host $m; $m | Out-File $Log -Append -Encoding utf8 }
@@ -71,7 +71,7 @@ function Winget($name, $id, $size) {
 }
 
 Say "Jazz Jackrabbit (CD, v1.2): static recompilation setup"
-Say "You need your own copy of the Jazz Jackrabbit CD (or a copy of its files), IDA 9 with idalib, and about 1 GB free."
+Say "You need your own copy of the Jazz Jackrabbit CD (or a copy of its files), and about 1 GB free."
 
 # ---- 1. tools ---------------------------------------------------------------
 Say "[1/6] Checking the tools"
@@ -81,17 +81,6 @@ if (-not (Have "py")) { Say "Missing: Python 3, which runs the lifter."; Winget 
 if (-not (Have "py")) { Fail "Python installed, but this window can't see it. Close it and run Setup.cmd again." }
 if (-not (Have "git")) { Say "Missing: Git, which fetches the pcrecomp toolkit."; Winget "Git" "Git.Git" "about 60 MB" }
 
-# IDA's code map is what the lift is seeded from today: without it the lifted
-# game stops with Runtime error 105 (ROADMAP). IDA can't be installed for you.
-$haveMap = Test-Path "work\ida\FILE0001.json"
-if (-not $haveMap -or $Force) {
-    $ErrorActionPreference = "Continue"
-    & py -3.11 -c "import idapro" *>> $Log
-    $idaOk = $LASTEXITCODE -eq 0
-    $ErrorActionPreference = "Stop"
-    if (-not $idaOk) { Fail "IDA 9's idalib is not usable from 'py -3.11' (import idapro). Install IDA 9 and its idalib Python package for Python 3.11, then run Setup again." }
-    Say "  IDA idalib: py -3.11"
-}
 
 # MSYS2's MinGW-w64 gcc compiles it (the CMake file uses GNU flags), with
 # MSYS2's CMake and Ninja.
@@ -137,7 +126,7 @@ if (-not (Test-Path (Join-Path $dest "SOUNDCRD.INF"))) {
 
 # ---- 3. the toolkit ----------------------------------------------------------------
 Say "[3/6] Fetching the pcrecomp toolkit ($PcrecompBranch)"
-function Has-Dos($p) { return (Test-Path "$p\runtime\win16\cpu.h") -and (Select-String -Path "$p\runtime\win16\cpu.h" -Pattern "DOS-extended" -SimpleMatch -Quiet) }
+function Has-Dos($p) { return (Test-Path "$p\tools\ne\ne_codemap.py") -and (Test-Path "$p\runtime\win16\cpu.h") -and (Select-String -Path "$p\runtime\win16\cpu.h" -Pattern "DOS-extended" -SimpleMatch -Quiet) }
 $parent = Split-Path $Root -Parent
 if ($env:PCRECOMP_DIR) {
     $pcr = $env:PCRECOMP_DIR
@@ -160,10 +149,8 @@ Say "  pcrecomp: $pcr"
 Say "[4/6] Lifting FILE0001.EXE to C"
 if ((Test-Path "work\src\_dispatch.c") -and (Test-Path "work\mem_image.bin") -and -not $Force) {
     Say "  already lifted (work\)."
-} elseif ($haveMap -and -not $Force) {
-    Run "py -3 tools\relift.py (with the IDA map in work\ida)" { py -3 tools\relift.py }
 } else {
-    Run "py -3 tools\relift.py --ida (IDA's code map, then the lift)" { py -3 tools\relift.py --ida }
+    Run "py -3 tools\relift.py (pcrecomp's own code map, then the lift)" { py -3 tools\relift.py }
 }
 
 # ---- 5. build ----------------------------------------------------------------------

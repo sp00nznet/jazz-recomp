@@ -31,8 +31,7 @@ Nothing from the game is in this repository.
 | Area | State |
 |---|---|
 | Version recompiled | Jazz Jackrabbit CD (USA), `FILE0001.EXE` (234,752 bytes, 1994-10-17) |
-| Lift (`tools/relift.py --ida`) | 6,754 functions, 0 unresolved calls, seeded from an IDA code map |
-| Lift without IDA | ❌ the linear sweep finds 7,595 "functions" and the game stops with Runtime error 105 ([ROADMAP](ROADMAP.md)) |
+| Lift (`tools/relift.py`) | 7,142 functions, 0 unresolved calls, from pcrecomp's own code map: no IDA |
 | DPMI, RTM's heap, the CRT unit, the BIOS data area | ✅ |
 | Intro cutscene, title, main menu, options, episodes, "Now approaching" | ✅ |
 | Keyboard, through the game's own INT 9 handler | ✅ |
@@ -42,9 +41,9 @@ Nothing from the game is in this repository.
 | Sound and music | ❌ off: the drivers are machine code loaded at run time |
 | Headless runs | `JAZZ_HEADLESS=1` with scripted keys and screenshots; no `--headless --record` yet |
 | Conformance harness | not yet ([ROADMAP](ROADMAP.md)) |
-| `Setup.cmd` | ✅ tested from a clean clone: lifts, builds, reaches the title, shortcut made |
+| `Setup.cmd` | ✅ tested from a clean clone with the IDA lift; the IDA-free setup is not re-run from a clean clone yet |
 | Installer (recomp-launcher) | `launcher/launcher.json` and a manual-run workflow; no installer has been built yet |
-| Toolkit | pcrecomp's `win16-dos` branch, not merged into `main` yet |
+| Toolkit | pcrecomp's `pcrecomp-ne-nativemap` branch (one branch for the Win16 recomps), not merged into `main` yet |
 
 ## Screenshots
 
@@ -59,9 +58,8 @@ Real output of the recompiled game:
 ## Getting Started
 
 You need **your own Jazz Jackrabbit CD** (or a mounted image, or a copy of
-its files) and **IDA 9 with idalib** for Python 3.11: the lift is seeded from
-IDA's code map today, and IDA is not something a script can install for you.
-Nothing is downloaded from the game.
+its files). Nothing is downloaded from the game, and no commercial tool is
+needed.
 
 ### Quick start: Setup.cmd
 
@@ -70,31 +68,30 @@ Nothing is downloaded from the game.
 2. Put the CD in (or mount its image).
 3. Double-click **`Setup.cmd`**.
 
-It checks for Python 3, Git, IDA's idalib (`py -3.11 -c "import idapro"`) and
+It checks for Python 3, Git and
 MSYS2's MinGW-w64 gcc, CMake and Ninja, and **asks** before installing what
 it can (Python, Git and MSYS2 with winget, the compilers with pacman), saying
 what and how big. It finds `FILE0001.EXE` on any drive, or asks where it is
 (`Setup.cmd -GameDir E:\` skips the question, `-Yes` answers yes to every
 install). Then it copies the CD into `game\`, sets up "no sound card", clones
-pcrecomp's `win16-dos` branch beside this folder (as `pcrecomp-win16-dos`,
-unless your `..\pcrecomp` is already on it), exports IDA's code map, lifts,
+pcrecomp's `pcrecomp-ne-nativemap` branch beside this folder (as `pcrecomp-pcrecomp-ne-nativemap`,
+unless your `..\pcrecomp` is already on it), lifts,
 builds, and leaves a **`Jazz Jackrabbit`** shortcut in this folder. A rerun
 skips finished steps (`-Force` redoes the lift). If it stops, it says why in
 one sentence, and the details are in `setup.log`.
 
 ### Step by step
 
-Prerequisites: Windows 10/11, Python 3 (`py -3 --version`), IDA 9 with idalib
-importable from Python 3.11 (`py -3.11 -c "import idapro"`), Git, and
+Prerequisites: Windows 10/11, Python 3 (`py -3 --version`), Git, and
 [MSYS2](https://www.msys2.org/) with `mingw-w64-x86_64-gcc`,
 `mingw-w64-x86_64-cmake` and `mingw-w64-x86_64-ninja`
 (`pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja`),
 with `C:\msys64\mingw64\bin` on `PATH`.
 
-1. **The toolkit**, beside this folder, on its `win16-dos` branch:
+1. **The toolkit**, beside this folder, on its `pcrecomp-ne-nativemap` branch:
    ```
-   git clone --branch win16-dos https://github.com/sp00nznet/pcrecomp ..\pcrecomp-win16-dos
-   set PCRECOMP_DIR=%CD%\..\pcrecomp-win16-dos
+   git clone --branch pcrecomp-ne-nativemap https://github.com/sp00nznet/pcrecomp ..\pcrecomp-pcrecomp-ne-nativemap
+   set PCRECOMP_DIR=%CD%\..\pcrecomp-pcrecomp-ne-nativemap
    ```
    Without `PCRECOMP_DIR`, `tools\relift.py` and CMake look for `..\pcrecomp`.
 2. **Your game files**: copy everything from the CD's root into `game\`.
@@ -103,15 +100,14 @@ with `C:\msys64\mingw64\bin` on `PATH`.
    > py -3 tools\make_soundcrd.py
    wrote SOUNDCRD.INF and NOSOUND.MUS (no sound card)
    ```
-4. **Lift** (IDA's code map into `work\ida`, then the C into `work\`):
+4. **Lift** into `work\` (pcrecomp builds the code map itself):
    ```
-   > py -3 tools\relift.py --ida
-   Wrote work/ida/FILE0001.json: 10 code segments, 581 functions, 69537 code heads (key=ne)
-   Wrote work\src\_unresolved_stubs.c: 0 unresolved stubs (6754 lifted functions, 6556 distinct call targets, 0.00% unresolved)
+   > py -3 tools\relift.py
+     FILE0001: native code map, 644 functions, 71757 heads
+   Wrote work\src\_unresolved_stubs.c: 0 unresolved stubs (7142 lifted functions, 6930 distinct call targets, 0.00% unresolved)
    ...
    image: 391648 bytes (0.37 MB) -> work\mem_image.bin
    ```
-   Without `--ida` it reuses the map already in `work\ida`.
 5. **Build**:
    ```
    cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=C:/msys64/mingw64/bin/gcc.exe -DPCRECOMP_DIR=%PCRECOMP_DIR%
@@ -123,9 +119,8 @@ with `C:\msys64\mingw64\bin` on `PATH`.
 
 The usual trip-ups: `python` opening the Microsoft Store (that is Windows'
 alias placeholder; use `py -3`); a freshly installed tool not being on `PATH`
-until you open a new window; idalib installed for a Python other than 3.11
-(`tools\relift.py` runs `py -3.11`); and a `..\pcrecomp` on `main`, which
-lacks the DOS-extended Win16 host and fails to compile `runtime\jazz.c`.
+until you open a new window; and a `..\pcrecomp` on `main`, which
+lacks the DOS-extended Win16 host and the native code map.
 
 ## Usage
 
