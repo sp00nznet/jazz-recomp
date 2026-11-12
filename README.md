@@ -26,24 +26,24 @@ mode), like the other recomps there. The layout is the
 and the lifted C is generated on your machine into `work/` (gitignored).
 Nothing from the game is in this repository.
 
-## Status: **v0.1.0, early alpha. It reaches the levels; the playfield draws wrong.**
+## Status: **v0.2.0, early alpha. In game: Diamondus 1 plays, Jazz runs, jumps, collects gems and gets hurt.**
 
 | Area | State |
 |---|---|
 | Version recompiled | Jazz Jackrabbit CD (USA), `FILE0001.EXE` (234,752 bytes, 1994-10-17) |
-| Lift (`tools/relift.py`) | 7,142 functions, 0 unresolved calls, from pcrecomp's own code map: no IDA |
+| Lift (`tools/relift.py`) | 7,147 functions, 0 unresolved calls, from pcrecomp's own code map: no IDA (six entries the map misses are seeded in `tools/entry_seeds.json`) |
 | DPMI, RTM's heap, the CRT unit, the BIOS data area | ✅ |
 | Intro cutscene, title, main menu, options, episodes, "Now approaching" | ✅ |
 | Keyboard, through the game's own INT 9 handler | ✅ |
 | The 70 Hz timer, through the game's own INT 8 handler | ✅ |
 | A level: status panel, timer, score | ✅ |
-| A level: the playfield | ❌ the camera settles mid-page and most tiles are missing |
+| A level: the playfield, scrolling, Jazz and the enemies | ✅ the compiled sprites run in a small interpreter in the runtime; some background areas draw black |
 | Sound and music | ❌ off: the drivers are machine code loaded at run time |
 | Headless runs | `JAZZ_HEADLESS=1` with scripted keys and screenshots; no `--headless --record` yet |
 | Conformance harness | not yet ([ROADMAP](ROADMAP.md)) |
 | `Setup.cmd` | ✅ tested from a clean clone with the IDA lift; the IDA-free setup is not re-run from a clean clone yet |
 | Installer (recomp-launcher) | `launcher/launcher.json` and a manual-run workflow; no installer has been built yet |
-| Toolkit | pcrecomp's `pcrecomp-ne-nativemap` branch (one branch for the Win16 recomps), not merged into `main` yet |
+| Toolkit | pcrecomp's `pcrecomp-ne-jazz` branch (`pcrecomp-ne-nativemap` plus the run-time code hook), not merged into `main` yet |
 
 ## Screenshots
 
@@ -53,7 +53,7 @@ Real output of the recompiled game:
 |---|---|
 | ![Intro](docs/screenshots/intro.png) | ![Main menu](docs/screenshots/menu.png) |
 | ![Episodes](docs/screenshots/episodes.png) | ![Now approaching](docs/screenshots/approaching.png) |
-| ![Diamondus, work in progress: the playfield is wrong](docs/screenshots/level-wip.png) | |
+| ![Diamondus 1, in game](docs/screenshots/level.png) | |
 
 ## Getting Started
 
@@ -74,7 +74,7 @@ it can (Python, Git and MSYS2 with winget, the compilers with pacman), saying
 what and how big. It finds `FILE0001.EXE` on any drive, or asks where it is
 (`Setup.cmd -GameDir E:\` skips the question, `-Yes` answers yes to every
 install). Then it copies the CD into `game\`, sets up "no sound card", clones
-pcrecomp's `pcrecomp-ne-nativemap` branch beside this folder (as `pcrecomp-pcrecomp-ne-nativemap`,
+pcrecomp's `pcrecomp-ne-jazz` branch beside this folder (as `pcrecomp-pcrecomp-ne-jazz`,
 unless your `..\pcrecomp` is already on it), lifts,
 builds, and leaves a **`Jazz Jackrabbit`** shortcut in this folder. A rerun
 skips finished steps (`-Force` redoes the lift). If it stops, it says why in
@@ -88,10 +88,10 @@ Prerequisites: Windows 10/11, Python 3 (`py -3 --version`), Git, and
 (`pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja`),
 with `C:\msys64\mingw64\bin` on `PATH`.
 
-1. **The toolkit**, beside this folder, on its `pcrecomp-ne-nativemap` branch:
+1. **The toolkit**, beside this folder, on its `pcrecomp-ne-jazz` branch:
    ```
-   git clone --branch pcrecomp-ne-nativemap https://github.com/sp00nznet/pcrecomp ..\pcrecomp-pcrecomp-ne-nativemap
-   set PCRECOMP_DIR=%CD%\..\pcrecomp-pcrecomp-ne-nativemap
+   git clone --branch pcrecomp-ne-jazz https://github.com/sp00nznet/pcrecomp ..\pcrecomp-pcrecomp-ne-jazz
+   set PCRECOMP_DIR=%CD%\..\pcrecomp-pcrecomp-ne-jazz
    ```
    Without `PCRECOMP_DIR`, `tools\relift.py` and CMake look for `..\pcrecomp`.
 2. **Your game files**: copy everything from the CD's root into `game\`.
@@ -141,7 +141,7 @@ build\jazz.exe
 | `JAZZ_HEADLESS=1` | no window |
 | `JAZZ_SECS=N` | exit after N seconds |
 | `JAZZ_SHOT="S:file.bmp,..."` | the screen at S seconds; paths must be absolute, because the game runs in `game\` |
-| `JAZZ_KEYS="S:key,..."` | scripted keys at S seconds (`enter space esc up down left right ctrl alt y n f1..f10 1..9 a..z`) |
+| `JAZZ_KEYS="S:key,..."` | scripted keys at S seconds (`enter space esc up down left right ctrl alt y n f1..f10 1..9 a..z`); `key*N` holds it N seconds |
 | `JAZZ_LOG=1` | every DPMI and DOS call |
 
 ## Building from source

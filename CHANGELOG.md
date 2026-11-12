@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- In game: Jazz, the enemies and the masked tiles are compiled sprites (x86
+  the game generates at run time); the runtime now runs them through a small
+  interpreter behind pcrecomp's new `recomp_dispatch_miss_hook`
+  (`pcrecomp-ne-jazz`). Diamondus 1 plays.
+- The IDA-free lift stopped with Runtime error 105 before the intro: six
+  functions the native code map misses are seeded in `tools/entry_seeds.json`.
+
+### Added
+- `JAZZ_KEYS` takes `key*N` to hold a key for N seconds.
+
 ### Changed
 - The lift needs no IDA: pcrecomp's `pcrecomp-ne-nativemap` branch builds the code map
   itself (`tools/ne/ne_codemap.py`). `tools/relift.py` lost `--ida`, `Setup.cmd`

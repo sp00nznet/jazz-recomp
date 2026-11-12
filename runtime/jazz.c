@@ -369,10 +369,12 @@ static void due(void)
     while (g_ishot < g_nshots && t >= g_shots[g_ishot].at) write_bmp(g_shots[g_ishot++].what);
     if (g_held_key && t >= g_release_at) { key_event(g_held_key, 1); g_held_key = 0; }
     while (!g_held_key && g_ikey < g_nkeys && t >= g_keys[g_ikey].at) {
+        char *hold = strchr(g_keys[g_ikey].what, '*');   /* "right*3": held 3 s */
+        double secs = hold ? (*hold = 0, atof(hold + 1)) : 0.15;
         int sc = key_code(g_keys[g_ikey].what);
         printf("[keys] %.1fs %s\n", t, g_keys[g_ikey].what);
         g_ikey++;
-        if (sc) { key_event(sc, 0); g_held_key = sc; g_release_at = t + 0.15; }
+        if (sc) { key_event(sc, 0); g_held_key = sc; g_release_at = t + secs; }
     }
     if (g_secs && t >= g_secs) {
         void dump_fn_ring(int n);
@@ -775,3 +777,127 @@ const RecompGame recomp_game = {
     .guest_dir = "C:\\JAZZ",
     .start     = jazz_start,
 };
+
+/* ---- code the game builds at run time --------------------------------------
+ * Sprites and masked tiles are compiled: each frame is x86 the game generates
+ * into a data block and calls far, with DS:SI at the screen spot -- a run of
+ * `mov [si+d],imm` per plane, `add si,imm` per row, plane switches through the
+ * sequencer, then `retf`. Nothing was lifted from there, so the far call lands
+ * here and the few instructions such code uses are run directly.
+ * ponytail: a subset interpreter; an unknown opcode is reported and the call
+ * returns, so a new one shows up as one log line, not a crash. */
+static uint16_t *x86_r16(CPU *cpu, int r)
+{
+    switch (r & 7) {
+    case 0: return &cpu->ax; case 1: return &cpu->cx; case 2: return &cpu->dx; case 3: return &cpu->bx;
+    case 4: return &cpu->sp; case 5: return &cpu->bp; case 6: return &cpu->si; default: return &cpu->di;
+    }
+}
+static uint8_t *x86_r8(CPU *cpu, int r)
+{
+    uint16_t *w = x86_r16(cpu, r & 3);
+    return (uint8_t *)w + (r >> 2);
+}
+
+int recomp_dispatch_miss_hook(CPU *cpu, uint16_t seg, uint16_t off, int far_call)
+{
+    uint16_t ip = off;
+    int cf = 0;
+    uint8_t first = mem_read8(cpu, seg, off);
+    if (first != 0xC6 && first != 0xC7) return 0;       /* not a compiled sprite: a driver */
+#define FB() mem_read8(cpu, seg, ip++)
+#define FW() (ip += 2, mem_read16(cpu, seg, (uint16_t)(ip - 2)))
+    for (long n = 0; n < 1000000; n++) {
+        uint8_t op = FB();
+        uint16_t sego = 0; int haveseg = 0;
+        if (op == 0x26 || op == 0x2E || op == 0x36 || op == 0x3E) {
+            sego = op == 0x26 ? cpu->es : op == 0x2E ? seg : op == 0x36 ? cpu->ss : cpu->ds;
+            haveseg = 1; op = FB();
+        }
+        if (op == 0xC6 || op == 0xC7 || op == 0x88 || op == 0x89 || op == 0x8A || op == 0x8B
+            || ((op == 0x81 || op == 0x83) )) {
+            uint8_t m = FB();
+            int mod = m >> 6, reg = (m >> 3) & 7, rm = m & 7;
+            if (mod == 3) {                                  /* register operand */
+                if (op == 0x81 || op == 0x83) {
+                    uint16_t imm = op == 0x81 ? FW() : (uint16_t)(int8_t)FB();
+                    uint16_t *d = x86_r16(cpu, rm);
+                    uint32_t r;
+                    switch (reg) {
+                    case 0: r = (uint32_t)*d + imm; break;
+                    case 2: r = (uint32_t)*d + imm + cf; break;
+                    case 3: r = (uint32_t)*d - imm - cf; break;
+                    case 5: r = (uint32_t)*d - imm; break;
+                    default: goto bad;
+                    }
+                    cf = (r >> 16) & 1; *d = (uint16_t)r;
+                    continue;
+                }
+                if (op == 0x8B) { *x86_r16(cpu, reg) = *x86_r16(cpu, rm); continue; }
+                if (op == 0x89) { *x86_r16(cpu, rm) = *x86_r16(cpu, reg); continue; }
+                if (op == 0x8A) { *x86_r8(cpu, reg) = *x86_r8(cpu, rm); continue; }
+                if (op == 0x88) { *x86_r8(cpu, rm) = *x86_r8(cpu, reg); continue; }
+                goto bad;
+            }
+            uint16_t ea, ds = cpu->ds;
+            switch (rm) {
+            case 0: ea = cpu->bx + cpu->si; break; case 1: ea = cpu->bx + cpu->di; break;
+            case 2: ea = cpu->bp + cpu->si; ds = cpu->ss; break; case 3: ea = cpu->bp + cpu->di; ds = cpu->ss; break;
+            case 4: ea = cpu->si; break; case 5: ea = cpu->di; break;
+            case 6: if (mod == 0) { ea = FW(); } else { ea = cpu->bp; ds = cpu->ss; } break;
+            default: ea = cpu->bx; break;
+            }
+            if (mod == 1) ea += (uint16_t)(int8_t)FB(); else if (mod == 2) ea += FW();
+            if (haveseg) ds = sego;
+            switch (op) {
+            case 0xC6: mem_write8(cpu, ds, ea, FB()); break;
+            case 0xC7: mem_write16(cpu, ds, ea, FW()); break;
+            case 0x88: mem_write8(cpu, ds, ea, *x86_r8(cpu, reg)); break;
+            case 0x89: mem_write16(cpu, ds, ea, *x86_r16(cpu, reg)); break;
+            case 0x8A: *x86_r8(cpu, reg) = mem_read8(cpu, ds, ea); break;
+            case 0x8B: *x86_r16(cpu, reg) = mem_read16(cpu, ds, ea); break;
+            default: goto bad;
+            }
+            continue;
+        }
+        if (op >= 0xB0 && op <= 0xB7) { *x86_r8(cpu, op & 7) = FB(); continue; }
+        if (op >= 0xB8 && op <= 0xBF) { *x86_r16(cpu, op & 7) = FW(); continue; }
+        if (op >= 0x40 && op <= 0x47) { (*x86_r16(cpu, op & 7))++; continue; }
+        if (op >= 0x48 && op <= 0x4F) { (*x86_r16(cpu, op & 7))--; continue; }
+        if (op == 0x05) { cpu->ax += FW(); continue; }
+        if (op == 0xEE) { port_out8(cpu, cpu->dx, cpu->al); continue; }
+        if (op == 0xEF) { port_out16(cpu, cpu->dx, cpu->ax); continue; }
+        if (op == 0xD0 || op == 0xD2) {                      /* rol/shl r8, 1 / cl */
+            uint8_t m = FB(); uint8_t *d = x86_r8(cpu, m & 7); int c = op == 0xD0 ? 1 : (cpu->cl & 7);
+            if ((m >> 6) != 3) goto bad;
+            switch ((m >> 3) & 7) {
+            case 0: if (c) { *d = (uint8_t)((*d << c) | (*d >> (8 - c))); cf = *d & 1; } break;
+            case 1: if (c) { *d = (uint8_t)((*d >> c) | (*d << (8 - c))); cf = *d >> 7; } break;
+            case 4: *d = (uint8_t)(*d << c); break;
+            case 5: *d = (uint8_t)(*d >> c); break;
+            default: goto bad;
+            }
+            continue;
+        }
+        if (op == 0x90) continue;
+        if (op == 0xCB || op == 0xC3) {
+            cpu->sp = (uint16_t)(cpu->sp + (far_call ? 4 : 2));
+            return 1;
+        }
+    bad:
+        {
+            static int told;
+            if (told++ < 20) {
+                printf("[x86] %u:%04X (called at %04X): unknown", seg, (uint16_t)(ip - 1), off);
+                for (int i = -2; i < 8; i++) printf(" %02X", mem_read8(cpu, seg, (uint16_t)(ip - 1 + i)));
+                printf("\n");
+            }
+        }
+        cpu->sp = (uint16_t)(cpu->sp + (far_call ? 4 : 2));
+        return 1;
+    }
+#undef FB
+#undef FW
+    cpu->sp = (uint16_t)(cpu->sp + (far_call ? 4 : 2));
+    return 1;
+}

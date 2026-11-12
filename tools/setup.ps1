@@ -5,7 +5,7 @@
     1. check the tools (Python 3, Git, MSYS2's MinGW-w64 gcc with CMake and
        Ninja) and offer to install what can be installed
     2. copy your CD into game\ and set up "no sound card"
-    3. fetch pcrecomp's pcrecomp-ne-nativemap branch at the tested commit
+    3. fetch pcrecomp's pcrecomp-ne-jazz branch at the tested commit
     4. lift FILE0001.EXE to C (tools\relift.py; pcrecomp makes the code map)
     5. build build\jazz.exe
     6. put a shortcut in this folder
@@ -29,11 +29,11 @@ Set-Location $Root
 $Log = Join-Path $Root "setup.log"
 "=== setup $(Get-Date -Format s)" | Out-File $Log -Encoding utf8
 
-# The toolkit this game needs: pcrecomp's pcrecomp-ne-nativemap branch (not merged into
+# The toolkit this game needs: pcrecomp's pcrecomp-ne-jazz branch (not merged into
 # main yet), at the commit it was last lifted, built and run against.
 $PcrecompUrl = "https://github.com/sp00nznet/pcrecomp.git"
-$PcrecompBranch = "pcrecomp-ne-nativemap"
-$PcrecompRef = "3097e4a0756765c07f1234d820490388a746a063"
+$PcrecompBranch = "pcrecomp-ne-jazz"
+$PcrecompRef = "9c79accd2ec59e5bfe90b66d0e815efab6a2a0ac"
 $Msys = "C:\msys64"
 
 function Say($m) { Write-Host $m; $m | Out-File $Log -Append -Encoding utf8 }

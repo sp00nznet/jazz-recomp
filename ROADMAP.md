@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Next
-- The playfield: why the start address settles 97 rows into a page, and why
-  most foreground tiles are missing (the latch blitter from the tile cache).
+- Background areas that draw black at the start of Diamondus 1 (behind the
+  first hill): a layer or palette effect not yet answered.
 - Play Diamondus 1 through.
 - Crt.Delay in real time (DelayCnt is pinned at its maximum).
 
@@ -20,9 +20,12 @@
   in place of the `JAZZ_*` environment variables.
 - Paths not compiled in (`game\`, `work\mem_image.bin`), so a farm build runs
   on a test VM.
-- Merge `pcrecomp-ne-nativemap` into pcrecomp `main` (through a PR) and pin `main`.
+- Merge `pcrecomp-ne-jazz` (on `pcrecomp-ne-nativemap`) into pcrecomp `main` (through a PR) and pin `main`.
 
 ## Toolkit (pcrecomp, pcrecomp-ne-nativemap)
+- The native code map misses six functions IDA found (seg 9: 375F, 38F2;
+  seg 10: 05BD, 05E5, 05EB, 1701); they are seeded by hand. Without them the
+  game stops with Runtime error 105 before the intro.
 - NE lifter: a seeded function's branch to an offset that is not a function
   start adds the function's start twice (seg001_3D6B, 0x7B10).
 - The lifted `iret` returns without popping its frame: fine for the host

@@ -65,11 +65,24 @@ ID and a name. With sound off, the timer handler never calls into a driver.
 The music engine (`MDRV000D.MUS`) is still loaded and called three times at
 start. The host skips those calls.
 
-## Next: the playfield
+## 5. Compiled sprites
 
-In a level, video memory holds the status panel, then three playfield pages
-and a tile cache, and the panel is a split screen (line compare). The start
-address begins at the top of page 1, then slides 97 rows down over ten frames
-and stays there. So each frame shows half of one page and half of the next,
-and most foreground tiles are missing. Next: the camera and the tile blitter,
-which copies from the tile cache with the latches.
+In a level, Jazz, the enemies and the masked tiles are compiled sprites: x86
+the game generates into data blocks and calls far, with DS:SI at the screen
+spot. Each is a run of `mov [si+d],imm`, `add si,imm` per row, and a plane
+step (`rol al,1; adc di,0; mov si,di; out dx,al`), then `retf`. Nothing was
+lifted from there, so those far calls missed and were dropped: no Jazz, no
+enemies. pcrecomp's Win16 host now offers a weak `recomp_dispatch_miss_hook`,
+and `runtime/jazz.c` defines it as a small interpreter for exactly those
+instructions (a call whose first byte is not a `mov` is left alone, so the
+sound driver stubs keep being skipped). An unknown opcode is logged as one
+`[x86]` line and the sprite returns.
+
+The camera that "settled mid-page" was fine: with the sprites drawn the
+playfield scrolls normally.
+
+## 6. The native code map
+
+The IDA-free code map misses six functions IDA found; without them the game
+stops with Runtime error 105 before the intro. `tools/entry_seeds.json`
+seeds them.
