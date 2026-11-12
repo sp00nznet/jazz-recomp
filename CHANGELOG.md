@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- `NOTICE.md` (replacing `NOTICE`), `CONTRIBUTING.md`, `CONTRIBUTORS.md`,
+  `docs/building.md`, `docs/testing.md`, and a `setup.sh` that says plainly
+  there is no Linux or macOS build yet.
+- `JAZZ_KEYS` takes `key*N` to hold a key for N seconds.
+- `Setup.cmd` (`tools/setup.ps1`): checks for Python, Git and MSYS2's
+  MinGW-w64 gcc, CMake and Ninja, offering to install them; copies the CD into
+  `game\`, sets up "no sound card", fetches pcrecomp's `pcrecomp-ne-jazz`
+  branch at the tested commit, lifts, builds and leaves a shortcut.
+- `launcher/launcher.json` for recomp-launcher, and an installer workflow
+  (manual only while the repo is private).
+- A recomp-netlab recipe (`jazz-recomp`, mingw builder; a compile check).
+
 ### Fixed
 - In game: Jazz, the enemies and the masked tiles are compiled sprites (x86
   the game generates at run time); the runtime now runs them through a small
@@ -13,30 +26,16 @@ All notable changes to this project are documented here. The format follows
   (`pcrecomp-ne-jazz`). Diamondus 1 plays.
 - The IDA-free lift stopped with Runtime error 105 before the intro: six
   functions the native code map misses are seeded in `tools/entry_seeds.json`.
-
-### Added
-- `JAZZ_KEYS` takes `key*N` to hold a key for N seconds.
-
-### Changed
-- The lift needs no IDA: pcrecomp's `pcrecomp-ne-nativemap` branch builds the code map
-  itself (`tools/ne/ne_codemap.py`). `tools/relift.py` lost `--ida`, `Setup.cmd`
-  no longer checks for idalib, and the game runs through the menus into a
-  level as before (7,142 functions, 0 unresolved calls).
-
-### Added
-- `Setup.cmd` (`tools/setup.ps1`): checks for Python, Git, IDA's idalib and
-  MSYS2's MinGW-w64 gcc, CMake and Ninja, offering to install what can be
-  installed; copies the CD into `game\`, sets up "no sound card", fetches
-  pcrecomp's `win16-dos` branch at the tested commit, exports the IDA map,
-  lifts, builds and leaves a shortcut. Tested from a clean clone.
-- `launcher/launcher.json` for recomp-launcher, and an installer workflow
-  (manual only while the repo is private).
-- A recomp-netlab recipe (`jazz-recomp`, mingw builder; a compile check).
+- `launcher/launcher.json` pinned pcrecomp at `3097e4a`, before the run-time
+  code hook; it now pins `9c79acc`, the commit setup uses.
 
 ### Changed
-- README rewritten in the pcrecomp house style: status table, Quick start
-  and Step by step, Usage, Building from source. The prerequisites no longer
-  list `capstone`, which nothing in the lift imports.
+- The lift needs no IDA: pcrecomp builds the code map itself
+  (`tools/ne/ne_codemap.py`). `tools/relift.py` lost `--ida`, and `Setup.cmd`
+  no longer checks for idalib.
+- README in the ra2 house style; the step-by-step build moved to
+  `docs/building.md` and the test variables to `docs/testing.md`. The
+  prerequisites no longer list `capstone`, which nothing in the lift imports.
 - `.gitignore`: `build-*/` (netlab's `build-farm*`), `setup.log`, the shortcut.
 
 ## [0.1.0] - 2026-11-08

@@ -9,7 +9,7 @@
     "name": "Jazz Jackrabbit (CD)",
     "files": ["FILE0001.EXE|file0001.exe"]
   },
-  "sources": [{ "repo": "sp00nznet/pcrecomp", "ref": "3097e4a0756765c07f1234d820490388a746a063", "dir": "pcrecomp" }],
+  "sources": [{ "repo": "sp00nznet/pcrecomp", "ref": "9c79accd2ec59e5bfe90b66d0e815efab6a2a0ac", "dir": "pcrecomp" }],
   "setup": {
     "windows": ["cmd", "/c", "Setup.cmd", "-Yes", "-GameDir", "{game}"]
   },

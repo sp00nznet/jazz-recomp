@@ -1,5 +1,10 @@
 # Roadmap
 
+## Done
+- `FILE0001.EXE` lifted without IDA (0 unresolved calls), through the intro,
+  title, menus and episode select into Diamondus 1, which plays.
+- Setup.cmd from the ZIP download to a shortcut, on Windows.
+
 ## Next
 - Background areas that draw black at the start of Diamondus 1 (behind the
   first hill): a layer or palette effect not yet answered.
@@ -30,3 +35,7 @@
   start adds the function's start twice (seg001_3D6B, 0x7B10).
 - The lifted `iret` returns without popping its frame: fine for the host
   calling a handler, wrong for a guest `pushf; call far` into a lifted handler.
+
+## Out of scope for now
+- Linux and macOS: the host builds as a Win32 program with MinGW; a Wine or
+  cross-compiled path comes after the harness.
