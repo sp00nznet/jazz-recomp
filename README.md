@@ -53,7 +53,7 @@ and gets hurt.
 | Area | State |
 |---|---|
 | Version recompiled | Jazz Jackrabbit CD (USA), `FILE0001.EXE` (234,752 bytes, 1994-10-17) |
-| Lift (`tools/relift.py`) | 7,142 functions, 0 unresolved calls, from pcrecomp's own code map: no IDA (six entries the map misses are seeded in `tools/entry_seeds.json`) |
+| Lift (`tools/relift.py`) | 7,147 functions, 0 unresolved calls, from pcrecomp's own code map: no IDA (six entries the map misses are seeded in `tools/entry_seeds.json`) |
 | DPMI, RTM's heap, the CRT unit, the BIOS data area | working |
 | Intro cutscene, title, main menu, options, episodes, "Now approaching" | working |
 | Keyboard and the 70 Hz timer, through the game's own INT 9 and INT 8 handlers | working |

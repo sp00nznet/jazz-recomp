@@ -26,7 +26,7 @@ with `C:\msys64\mingw64\bin` on `PATH`.
    ```
    > py -3 tools\relift.py
      FILE0001: native code map, 644 functions, 71757 heads
-   Wrote work\src\_unresolved_stubs.c: 0 unresolved stubs (7142 lifted functions, 6930 distinct call targets, 0.00% unresolved)
+   Wrote work\src\_unresolved_stubs.c: 0 unresolved stubs (7147 lifted functions, 6934 distinct call targets, 0.00% unresolved)
    ...
    image: 391648 bytes (0.37 MB) -> work\mem_image.bin
    ```
