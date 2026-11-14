@@ -13,7 +13,7 @@ are fine.
 
 ## Before a pull request
 
-1. Lift from clean and build (pcrecomp on `pcrecomp-ne-jazz`):
+1. Lift from clean and build (pcrecomp on `main`):
    ```
    py -3 tools\relift.py
    cmake --build build
@@ -29,7 +29,7 @@ are fine.
 - A bug in the NE lifter, the code map or the Win16 host (a missing or wrong
   KERNEL call) belongs in
   [pcrecomp](https://github.com/sp00nznet/pcrecomp), against
-  `pcrecomp-ne-jazz`, not here.
+  `main`, not here.
 - Something only this game does goes in `runtime/` (the DOS machine) or `tools/relift.py`,
   with a comment that says what it fixes and why.
 - A wall you got past goes in `docs/lifting.md`: what it looked like, what it

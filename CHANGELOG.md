@@ -30,6 +30,7 @@ All notable changes to this project are documented here. The format follows
   code hook; it now pins `9c79acc`, the commit setup uses.
 
 ### Changed
+- Builds against pcrecomp main; the `pcrecomp-ne-jazz` branch is merged.
 - The lift needs no IDA: pcrecomp builds the code map itself
   (`tools/ne/ne_codemap.py`). `tools/relift.py` lost `--ida`, and `Setup.cmd`
   no longer checks for idalib.

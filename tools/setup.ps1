@@ -5,7 +5,7 @@
     1. check the tools (Python 3, Git, MSYS2's MinGW-w64 gcc with CMake and
        Ninja) and offer to install what can be installed
     2. copy your CD into game\ and set up "no sound card"
-    3. fetch pcrecomp's pcrecomp-ne-jazz branch at the tested commit
+    3. fetch pcrecomp (main) if it is missing
     4. lift FILE0001.EXE to C (tools\relift.py; pcrecomp makes the code map)
     5. build build\jazz.exe
     6. put a shortcut in this folder
@@ -29,11 +29,9 @@ Set-Location $Root
 $Log = Join-Path $Root "setup.log"
 "=== setup $(Get-Date -Format s)" | Out-File $Log -Encoding utf8
 
-# The toolkit this game needs: pcrecomp's pcrecomp-ne-jazz branch (not merged into
-# main yet), at the commit it was last lifted, built and run against.
+# The toolkit this game needs: pcrecomp's main.
 $PcrecompUrl = "https://github.com/sp00nznet/pcrecomp.git"
-$PcrecompBranch = "pcrecomp-ne-jazz"
-$PcrecompRef = "9c79accd2ec59e5bfe90b66d0e815efab6a2a0ac"
+$PcrecompBranch = "main"
 $Msys = "C:\msys64"
 
 function Say($m) { Write-Host $m; $m | Out-File $Log -Append -Encoding utf8 }
@@ -133,13 +131,12 @@ if ($env:PCRECOMP_DIR) {
     if (-not (Has-Dos $pcr)) { Fail "PCRECOMP_DIR ($pcr) is not on pcrecomp's $PcrecompBranch branch. Check that branch out there, or unset PCRECOMP_DIR." }
 } elseif (Has-Dos "$parent\pcrecomp") {
     $pcr = "$parent\pcrecomp"
+} elseif (Test-Path "$parent\pcrecomp") {
+    # never switch someone's ..\pcrecomp to another branch
+    Fail "$parent\pcrecomp is an older pcrecomp. Update it to main (git -C `"$parent\pcrecomp`" checkout main; git -C `"$parent\pcrecomp`" pull), or set PCRECOMP_DIR."
 } else {
-    # never switch someone's ..\pcrecomp to another branch: a checkout of its own
-    $pcr = "$parent\pcrecomp-$PcrecompBranch"
-    if (-not (Has-Dos $pcr)) {
-        Run "fetching pcrecomp into $pcr (about 20 MB)" { git clone --quiet --branch $PcrecompBranch $PcrecompUrl $pcr }
-        Run "checking out pcrecomp $($PcrecompRef.Substring(0, 7))" { git -C $pcr checkout --quiet $PcrecompRef }
-    }
+    $pcr = "$parent\pcrecomp"
+    Run "fetching pcrecomp into $pcr (about 20 MB)" { git clone --quiet --branch $PcrecompBranch $PcrecompUrl $pcr }
 }
 $pcr = (Resolve-Path $pcr).Path
 $env:PCRECOMP_DIR = $pcr

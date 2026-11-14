@@ -10,12 +10,11 @@ Prerequisites: Windows 10/11, Python 3 (`py -3 --version`), Git, and
 (`pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja`),
 with `C:\msys64\mingw64\bin` on `PATH`.
 
-1. **The toolkit**, beside this folder, on its `pcrecomp-ne-jazz` branch:
+1. **The toolkit**, beside this folder, on `main`:
    ```
-   git clone --branch pcrecomp-ne-jazz https://github.com/sp00nznet/pcrecomp ..\pcrecomp-pcrecomp-ne-jazz
-   set PCRECOMP_DIR=%CD%\..\pcrecomp-pcrecomp-ne-jazz
+   git clone https://github.com/sp00nznet/pcrecomp ..\pcrecomp
    ```
-   Without `PCRECOMP_DIR`, `tools\relift.py` and CMake look for `..\pcrecomp`.
+   `tools\relift.py` and CMake look for `..\pcrecomp` (or `PCRECOMP_DIR`).
 2. **Your game files**: copy everything from the CD's root into `game\`.
 3. **No sound card**, as the game's own SETUP would set it up:
    ```
@@ -46,9 +45,8 @@ lacks the DOS-extended Win16 host and the native code map.
 
 ## Notes
 
-- The toolkit is pcrecomp's `pcrecomp-ne-jazz` branch (`pcrecomp-ne-nativemap`
-  plus the run-time code hook the compiled sprites need), pinned in setup and
-  the launcher at `9c79acc`. Neither is merged into `main` yet.
+- The toolkit is pcrecomp's `main` (the native NE code map and the run-time
+  code hook the compiled sprites need).
 - The KERNEL imports are named from pcrecomp's built-in Win16 ordinal table
   (`tools/ne/win16.py`); this game needs no ordinal map file.
 - The paths to `game\` and `work\mem_image.bin` are compiled in, so the exe

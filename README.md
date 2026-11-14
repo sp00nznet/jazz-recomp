@@ -11,7 +11,7 @@ BIOS, the VGA in Mode X, the timer, the keyboard, and a small interpreter for
 the sprites the game compiles to x86 at run time.
 
 Built on the [pcrecomp](https://github.com/sp00nznet/pcrecomp) toolchain, on
-its branch **`pcrecomp-ne-jazz`** (not yet in `main`), in the layout of the
+`main`, in the layout of the
 [Space Bucks recomp](https://github.com/sp00nznet/spacebucks-recomp).
 
 ![Diamondus 1, recompiled](docs/screenshots/level.png)
@@ -36,8 +36,7 @@ The script checks for Python 3, Git and MSYS2's MinGW-w64 gcc, CMake and
 Ninja, and **asks** before installing them, saying what and how big. It finds
 `FILE0001.EXE` on any drive or asks where it is (`Setup.cmd -GameDir E:\`;
 `-Yes` answers yes to everything), copies the CD into `game\`, sets up "no
-sound card", clones pcrecomp's `pcrecomp-ne-jazz` branch beside this folder
-(as `pcrecomp-pcrecomp-ne-jazz`, unless your `..\pcrecomp` is already on it),
+sound card", clones pcrecomp (`main`) beside this folder as `..\pcrecomp` if it is missing,
 lifts and builds. A rerun skips finished steps (`-Force` redoes the lift); if
 it stops, it says why in one sentence and the details are in `setup.log`.
 Building by hand is in **[docs/building.md](docs/building.md)**.
@@ -77,7 +76,7 @@ Real output of the recompiled game:
 
 ## Documentation
 
-- [docs/building.md](docs/building.md): building by hand, the toolkit branch, the usual trip-ups
+- [docs/building.md](docs/building.md): building by hand, the usual trip-ups
 - [docs/testing.md](docs/testing.md): headless runs, scripted keys and screenshots
 - [docs/lifting.md](docs/lifting.md): every wall so far and its fix
 - [ROADMAP.md](ROADMAP.md), [CHANGELOG.md](CHANGELOG.md), [CONTRIBUTING.md](CONTRIBUTING.md)

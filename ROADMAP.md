@@ -25,9 +25,8 @@
   in place of the `JAZZ_*` environment variables.
 - Paths not compiled in (`game\`, `work\mem_image.bin`), so a farm build runs
   on a test VM.
-- Merge `pcrecomp-ne-jazz` (on `pcrecomp-ne-nativemap`) into pcrecomp `main` (through a PR) and pin `main`.
 
-## Toolkit (pcrecomp, pcrecomp-ne-nativemap)
+## Toolkit (pcrecomp)
 - The native code map misses six functions IDA found (seg 9: 375F, 38F2;
   seg 10: 05BD, 05E5, 05EB, 1701); they are seeded by hand. Without them the
   game stops with Runtime error 105 before the intro.
