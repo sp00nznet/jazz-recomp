@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include "jazz.h"
 #include "recomp_game.h"
+#include "replay/replay.h"
 
 #ifndef RECOMP_GAME_DIR
 #define RECOMP_GAME_DIR "game"
@@ -48,8 +49,14 @@ static int g_log;
 uint8_t *jazz_real(uint32_t lin) { return g->mem + g_real + lin; }
 
 static LARGE_INTEGER g_qpf, g_qp0;
+/* Under --record/--replay/--keys f..., time is virtual: every recomp_tick
+ * (500 loop back-edges) is g_vus_step us, so the game reaches tick N after the
+ * same work on any machine and loading takes no time. JAZZ_VUS sets the step. */
+static uint64_t g_vus;
+static unsigned g_vus_step;
 uint64_t jazz_us(void)
 {
+    if (g_vus_step) return g_vus;
     LARGE_INTEGER t;
     QueryPerformanceCounter(&t);
     return (uint64_t)((t.QuadPart - g_qp0.QuadPart) * 1000000 / g_qpf.QuadPart);
@@ -290,6 +297,7 @@ void port_out16(CPU *cpu, uint16_t port, uint16_t v)
 /* ---- test runs: shots, keys, an end ---------------------------------------- */
 
 static uint32_t g_frame[640 * 400];
+static volatile uint32_t g_ticks;     /* IRQ0s delivered: the game's clock, and replay's frame */
 
 static void write_bmp(const char *path)
 {
@@ -309,7 +317,8 @@ static void write_bmp(const char *path)
             fwrite(b, 3, 1, f);
         }
     fclose(f);
-    printf("[shot] %dx%d mode %02X -> %s\n", w, h, vga_mode(), path);
+    printf("[shot] %dx%d mode %02X tick %u hash %08X -> %s\n", w, h, vga_mode(), g_ticks,
+           replay_hash(g_frame, (size_t)w * h * 4), path);
     vga_stats();
     if (getenv("JAZZ_VRAM")) vga_dump(getenv("JAZZ_VRAM"), 84);
 }
@@ -356,6 +365,7 @@ static int key_code(const char *k)
 
 static void key_event(int sc, int up)
 {
+    replay_log(g_ticks, "key %x %s", sc, up ? "up" : "down");
     if (sc > 0xFF) key_push(0xE0);
     key_push((uint8_t)((sc & 0xFF) | (up ? 0x80 : 0)));
 }
@@ -366,7 +376,10 @@ static double g_release_at;
 static void due(void)
 {
     double t = jazz_us() / 1e6;
-    while (g_ishot < g_nshots && t >= g_shots[g_ishot].at) write_bmp(g_shots[g_ishot++].what);
+    while (g_ishot < g_nshots && t >= g_shots[g_ishot].at) {
+        replay_log(g_ticks, "shot %s", replay_path(g_shots[g_ishot].what));
+        write_bmp(g_shots[g_ishot++].what);
+    }
     if (g_held_key && t >= g_release_at) { key_event(g_held_key, 1); g_held_key = 0; }
     while (!g_held_key && g_ikey < g_nkeys && t >= g_keys[g_ikey].at) {
         char *hold = strchr(g_keys[g_ikey].what, '*');   /* "right*3": held 3 s */
@@ -378,6 +391,7 @@ static void due(void)
     }
     if (g_secs && t >= g_secs) {
         void dump_fn_ring(int n);
+        replay_log(g_ticks, "end");
         printf("[jazz] %.0f s: done\n", g_secs);
         fflush(stdout);
         dump_fn_ring(30);
@@ -387,10 +401,38 @@ static void due(void)
     }
 }
 
+/* --replay / --keys f<tick>:...: events due at this IRQ0 count. "key SC
+ * down|up" (a scan code, as recorded), "key NAME" or "NAME[*TICKS]" (a press,
+ * held TICKS, default 3), "shot FILE", "end". */
+static int g_rp_held;
+static uint32_t g_rp_release;
+static void replay_events(void)
+{
+    if (g_rp_held && g_ticks >= g_rp_release) { key_event(g_rp_held, 1); g_rp_held = 0; }
+    for (const char *e; (e = replay_due(g_ticks));) {
+        char a[240] = "", b[16] = "", c[16] = "";
+        sscanf(e, "%239s %15s %15s", a, b, c);
+        if (!strcmp(a, "shot")) { char f[MAX_PATH]; snprintf(f, sizeof f, "%s", replay_path(e + 5)); write_bmp(f); continue; }
+        if (!strcmp(a, "end")) { printf("[replay] tick %u: end\n", g_ticks); fflush(stdout); ExitProcess(0); }
+        if (!strcmp(a, "key")) {
+            if (*c) { key_event((int)strtol(b, NULL, 16), *c == 'u'); continue; }
+            sscanf(e + 4, "%239s", a);
+        }
+        char *hold = strchr(a, '*');
+        uint32_t n = hold ? (*hold = 0, (uint32_t)atoi(hold + 1)) : 3;
+        int sc = key_code(a);
+        printf("[keys] tick %u %s\n", g_ticks, a);
+        if (!sc) continue;
+        if (g_rp_held) key_event(g_rp_held, 1);
+        key_event(sc, 0); g_rp_held = sc; g_rp_release = g_ticks + n;
+    }
+}
+
 /* From the lifted code's loop back-edges: deliver what is due. */
 void recomp_tick(CPU *cpu)
 {
     g_recomp_tick_budget = 500;
+    g_vus += g_vus_step;
     if (g_in_irq) return;
     static uint64_t last_due;
     uint64_t now = jazz_us();
@@ -401,6 +443,8 @@ void recomp_tick(CPU *cpu)
         if (now - g_next_irq0 > period * 8) g_next_irq0 = now;   /* fell behind: don't storm */
         g_next_irq0 += period;
         fire(cpu, 8);
+        g_ticks++;
+        replay_events();
     }
     uint8_t sc;
     if (key_pop(&sc)) { g_port60 = sc; fire(cpu, 9); }
@@ -764,9 +808,13 @@ static void jazz_start(CPU *cpu)
     bda[0x87] = 0x60; bda[0x88] = 0x09;      /* EGA/VGA info */
     vga_init();
 
+    const char *jk = getenv("JAZZ_KEYS");
+    if (getenv("RECOMP_RECORD") || getenv("RECOMP_REPLAY") || getenv("RECOMP_FKEYS") || (jk && (*jk | 0x20) == 'f'))
+        g_vus_step = getenv("JAZZ_VUS") ? (unsigned)atoi(getenv("JAZZ_VUS")) : 150;
+    if (jk && (*jk | 0x20) == 'f') replay_init(NULL, NULL, jk);   /* f<tick>:key,... */
+    else { g_nkeys = parse_due("JAZZ_KEYS", g_keys, 64); replay_init(NULL, NULL, NULL); }
     if (_chdir(RECOMP_GAME_DIR)) printf("[jazz] cannot enter %s\n", RECOMP_GAME_DIR);
     g_nshots = parse_due("JAZZ_SHOT", g_shots, 16);
-    g_nkeys = parse_due("JAZZ_KEYS", g_keys, 64);
     if (getenv("JAZZ_SECS")) g_secs = atof(getenv("JAZZ_SECS"));
     if (!getenv("JAZZ_HEADLESS")) CloseHandle(CreateThread(NULL, 0, window_thread, NULL, 0, NULL));
     printf("[jazz] conventional memory at %08X, game in %s\n", g_real, RECOMP_GAME_DIR);

@@ -1,0 +1,21 @@
+# Jazz Jackrabbit: title -> New Game -> Medium -> Turtle Terror -> Diamondus 1, then right and fire.
+# Frames are IRQ0 ticks (the game's PIT, ~70/s) on virtual time; see docs/testing.md.
+2093 shot menu.bmp
+2162 key 1c down
+2173 key 1c up
+2373 key 1c down
+2383 key 1c up
+2582 key 1c down
+2593 key 1c up
+2793 key 1c down
+2803 key 1c up
+3073 key 1c down
+3083 key 1c up
+3213 shot approaching.bmp
+3562 shot level.bmp
+3633 key e04d down
+3843 key e04d up
+3913 key 1d down
+3983 key 1d up
+4122 shot moved.bmp
+4193 end

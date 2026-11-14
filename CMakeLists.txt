@@ -31,7 +31,8 @@ target_compile_options(jazz_segments PRIVATE -Wall -Wno-unused-variable -Wno-unu
 
 file(GLOB RUNTIME_SOURCES CONFIGURE_DEPENDS "${WIN16_RT}/host/*.c")
 list(FILTER RUNTIME_SOURCES EXCLUDE REGEX "/main\.c$")
-add_library(jazz_runtime STATIC ${RUNTIME_SOURCES} runtime/jazz.c runtime/vga.c)
+add_library(jazz_runtime STATIC ${RUNTIME_SOURCES} runtime/jazz.c runtime/vga.c
+            "${PCRECOMP_DIR}/runtime/replay/replay.c")
 target_compile_definitions(jazz_runtime PRIVATE
     RECOMP_GAME_DIR="${CMAKE_SOURCE_DIR}/game"
     RECOMP_DATA_DIR="${CMAKE_SOURCE_DIR}/game")
