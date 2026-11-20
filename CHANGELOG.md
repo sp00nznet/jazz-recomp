@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-20
+
 ### Added
 - `NOTICE.md` (replacing `NOTICE`), `CONTRIBUTING.md`, `CONTRIBUTORS.md`,
   `docs/building.md`, `docs/testing.md`, and a `setup.sh` that says plainly
@@ -15,8 +17,8 @@ All notable changes to this project are documented here. The format follows
   MinGW-w64 gcc, CMake and Ninja, offering to install them; copies the CD into
   `game\`, sets up "no sound card", fetches pcrecomp's `pcrecomp-ne-jazz`
   branch at the tested commit, lifts, builds and leaves a shortcut.
-- `launcher/launcher.json` for recomp-launcher, and an installer workflow
-  (manual only while the repo is private).
+- `launcher/launcher.json` for recomp-launcher, and an installer workflow:
+  an artifact on every push to main, a release on a v* tag.
 - A recomp-netlab recipe (`jazz-recomp`, mingw builder; a compile check).
 
 ### Fixed
